@@ -1,6 +1,7 @@
 # 导入模块
 import requests
 import json
+from save_data import data_to_db
 
 
 def parse(url):
@@ -43,25 +44,26 @@ def get_date(article_list):
 
     # 获取每一篇文章的信息
     for article in article_list:
-        title = article['title']
-
-        # 如果有content键，就应该能够返回数据，如果没有这个键，返回的是None
-        if article['extra'].get('content'):
-            summary = article['extra'].get('content')
-
-        elif article['extra'].get('summary'):
-            summary = article['extra'].get('summary')
-
-        else:
-            summary = ''
 
         # 获取详情页id
         child_id = article['extra']['child_id']
 
-        # 组装数据
-        data_list.append((title, summary, child_id))
+        para = ''
+        # 获取作者
+        if len(article['type_name']) > 1 and article['type_name'] == "金色快报":
+            para = 'lives'
 
-    return data_list
+        elif len(article['type_name']) == 0:
+            if article['extra']['author'].startswith('金色财经'):
+                para = 'news/blockchain'
+            else:
+                para = 'blockchain'
+
+        # 整理详情页的后缀
+        part_html = '{}/{}.html'.format(para, child_id)
+
+        return part_html
+
 
 
 def next_page(article_list):
@@ -92,10 +94,13 @@ def main():
 
     while i < 2:
         # 发送请求，获取响应
-        article_list  = parse(url)
+        article_list = parse(url)
 
-        # 提取数据
-        result = get_date(article_list)
+        # 返回详情页的部分url
+        part_html = get_date(article_list)
+        print(part_html)
+
+
 
         # 进行数据的保存
 
